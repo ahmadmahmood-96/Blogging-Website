@@ -8,8 +8,12 @@ const bodyParser = require("body-parser");
 
 mongoose.set("strictQuery", false);
 
+// Importing Verifying Token Middleware
+const verifyToken = require("./middleware/verify");
+
 // Importing Routes
 const authRoutes = require("./routes/authRoutes");
+const blogRoutes = require("./routes/blogRoutes");
 
 // Middleware
 app.use(cors());
@@ -17,6 +21,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
     extended: true
 }));
+
 
 // Database Setup
 const URI = process.env.MONGODB_URL;
@@ -32,6 +37,7 @@ mongoose
 
 // Routes
 app.use('/auth', authRoutes);
+app.use('/blog', verifyToken, blogRoutes);
 
 // Testing Endpoint
 app.get('/', (req, res) => {
