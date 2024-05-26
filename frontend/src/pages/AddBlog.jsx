@@ -1,7 +1,17 @@
 import React, { useState } from "react";
-import { Form, Input, Button, message, Typography, Select, Flex } from "antd";
+import {
+  Form,
+  Input,
+  Button,
+  message,
+  Typography,
+  Select,
+  Upload,
+  Radio,
+} from "antd";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
+import { UploadOutlined } from "@ant-design/icons";
 
 const { Option } = Select;
 const baseUrl = process.env.REACT_APP_BASE_URL;
@@ -11,49 +21,81 @@ export default function AddBlog() {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
   const [content, setContent] = useState("");
+  const [blogImage, setBlogImage] = useState(null);
+  const [isPublic, setIsPublic] = useState(true); // New state for public/private
 
   const onFinish = async (values) => {
-    try {
+    if (!blogImage) {
+      message.error("Please upload an image!");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.readAsDataURL(blogImage);
+    reader.onloadend = async () => {
+      const base64Image = reader.result;
+
       const requestData = {
         createdBy: jwtDecode(localStorage.getItem("token")).user._id,
         title: values.title,
         category: values.category,
         content: values.content,
+        image: base64Image,
+        public: isPublic, // Include the public state in the request data
       };
-      console.log(requestData);
 
-      const response = await axios.post(
-        `${baseUrl}blog/add-blog`,
-        requestData,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
+      try {
+        const response = await axios.post(
+          `${baseUrl}blog/add-blog`,
+          requestData,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+
+        if (response.status === 201) {
+          clearForm();
+          setBlogImage(null);
+          message.success(response.data.message);
+        } else {
+          message.error(response.data.message);
         }
-      );
-
-      if (response.status === 201) {
-        clearForm();
-        message.success(response.data.message);
-      } else {
-        message.error(response.data.message);
+      } catch (error) {
+        message.error("Failed to add Blog. Please try again.");
       }
-    } catch (error) {
-      message.error("Failed to add Blog. Please try again.");
+    };
+  };
+
+  const beforeUpload = (file) => {
+    const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
+
+    if (!allowedTypes.includes(file.type)) {
+      message.error("You can only upload JPG, JPEG, or PNG files!");
+      return Upload.LIST_IGNORE;
     }
+
+    setBlogImage(file);
+    return false; // Prevent the upload from automatically occurring
   };
 
   const clearForm = () => {
     form.resetFields(); // Reset form fields
+    setBlogImage(null); // Clear the blogImage state
+    setIsPublic(true); // Reset the public/private state
   };
 
   return (
     <>
-      <Flex
-        vertical
-        justify="center"
-        align="center"
-        style={{ height: "100vh" }}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
       >
         <Typography.Title level={2}>Add blog</Typography.Title>
 
@@ -120,6 +162,49 @@ export default function AddBlog() {
             />
           </Form.Item>
 
+          <Form.Item
+            label="Image"
+            name="image"
+            valuePropName="fileList"
+            getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}
+            extra="Please upload an image for the blog"
+            rules={[
+              {
+                required: true,
+                message: "Please upload an image for the blog",
+              },
+            ]}
+          >
+            <Upload
+              name="image"
+              listType="picture"
+              accept=".png, .jpeg, .jpg"
+              beforeUpload={beforeUpload}
+              onRemove={() => setBlogImage(null)}
+            >
+              <Button icon={<UploadOutlined />}>Upload Image</Button>
+            </Upload>
+          </Form.Item>
+
+          <Form.Item
+            label="Visibility"
+            name="visibility"
+            rules={[
+              {
+                required: true,
+                message: "Please select the visibility of the blog",
+              },
+            ]}
+          >
+            <Radio.Group
+              onChange={(e) => setIsPublic(e.target.value)}
+              value={isPublic}
+            >
+              <Radio value={true}>Public</Radio>
+              <Radio value={false}>Private</Radio>
+            </Radio.Group>
+          </Form.Item>
+
           <Form.Item wrapperCol={{ offset: 4, span: 16 }}>
             <Button type="primary" htmlType="submit">
               Add Blog
@@ -129,7 +214,7 @@ export default function AddBlog() {
             </Button>
           </Form.Item>
         </Form>
-      </Flex>
+      </div>
     </>
   );
 }
