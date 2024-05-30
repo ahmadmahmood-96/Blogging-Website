@@ -3,9 +3,10 @@ import { Menu } from "antd";
 import { useNavigate } from "react-router-dom";
 import {
   LogoutOutlined,
-  HomeOutlined,
   EyeOutlined,
   EditOutlined,
+  BarChartOutlined,
+  PlusCircleOutlined,
 } from "@ant-design/icons";
 
 const SiderComponent = () => {
@@ -35,16 +36,21 @@ const SiderComponent = () => {
 };
 
 const items = [
-  { key: "/blogs", label: "See All Blogs", icon: <HomeOutlined /> },
   {
-    key: "/home/user-details",
-    label: "See My Blogs",
-    icon: <EyeOutlined />,
+    key: "/dashboard",
+    label: "Dashboard",
+    icon: <BarChartOutlined />,
+  },
+  { key: "/", label: "See All Blogs", icon: <EyeOutlined /> },
+  {
+    key: "/edit-blog",
+    label: "Edit My Blogs",
+    icon: <EditOutlined />,
   },
   {
-    key: "/home/order-details",
-    label: "Dashboard",
-    icon: <EditOutlined />,
+    key: "/add-blog",
+    label: "Add Blog",
+    icon: <PlusCircleOutlined />,
   },
   { key: "logout", label: "Logout", icon: <LogoutOutlined />, danger: true },
 ];

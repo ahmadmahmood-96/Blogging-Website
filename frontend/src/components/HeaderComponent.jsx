@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Space, Typography, Tooltip } from "antd";
 import { MenuUnfoldOutlined, MenuFoldOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
-// import { decodeToken } from "../utils/jwtUtils";
+import { jwtDecode } from "jwt-decode";
 
 const HeaderComponent = ({ collapsed, handleToggle }) => {
   const [name, setName] = useState("");
@@ -10,8 +10,8 @@ const HeaderComponent = ({ collapsed, handleToggle }) => {
 
   useEffect(() => {
     if (localStorage.getItem("token")) {
-      // const { name } = decodeToken(localStorage.getItem("token"));
-      setName("name");
+      const name = jwtDecode(localStorage.getItem("token")).user.name;
+      setName(name);
     }
   }, [name, navigate]);
 
@@ -31,7 +31,10 @@ const HeaderComponent = ({ collapsed, handleToggle }) => {
             />
           )}
         </Tooltip>
-        <Typography.Text style={{ fontSize: 20, color: "#fbfbfb" }}>
+        <Typography.Text
+          style={{ fontSize: 20, color: "#fbfbfb", cursor: "pointer" }}
+          onClick={() => navigate("/")}
+        >
           Blogging Website
         </Typography.Text>
       </Space>

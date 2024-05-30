@@ -4,6 +4,7 @@ import SiderComponent from "../components/SiderComponent";
 import HeaderComponent from "../components/HeaderComponent";
 import { Layout } from "antd";
 import LoggedUserRoutes from "../routes/LoggedUserRoutes";
+import Blogs from "./Blogs";
 const { Sider, Content } = Layout;
 
 export default function Home() {
@@ -44,6 +45,7 @@ export default function Home() {
   ) : (
     <>
       <Typography.Text>Not Logged in User</Typography.Text>
+      <Blogs />
     </>
   );
 }

@@ -2,6 +2,8 @@ import { Routes, Route } from "react-router-dom";
 
 import PageNotFound from "../pages/PageNotFound";
 import AddBlog from "../pages/AddBlog";
+import EditBlogs from "../pages/EditBlogs";
+import Dashboard from "../pages/Dashboard";
 import Blogs from "../pages/Blogs";
 
 const HomeRoutes = () => {
@@ -9,6 +11,8 @@ const HomeRoutes = () => {
     <>
       <Routes>
         <Route path="/" index element={<Blogs />} />
+        <Route path="/edit-blog" index element={<EditBlogs />} />
+        <Route path="/dashboard" index element={<Dashboard />} />
         <Route path="/add-blog" index element={<AddBlog />} />
         <Route path="/*" element={<PageNotFound />} />
       </Routes>

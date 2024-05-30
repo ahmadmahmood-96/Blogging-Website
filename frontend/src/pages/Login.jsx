@@ -25,7 +25,6 @@ export default function Login() {
     setIsButtonDisabled(true);
     try {
       const response = await axios.post(`${baseUrl}auth/login`, values);
-      console.log(response.data);
       if (response.status === 200) {
         localStorage.setItem("token", response.data.token);
         message.success(response.data.message);

@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const blogSchema = new mongoose.Schema({
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: "Users",
         required: true,
     },
     title: {
@@ -20,22 +20,20 @@ const blogSchema = new mongoose.Schema({
     },
     image: {
         type: String, // Base64 encoded string
-        required: true,
     },
     likes: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'Users',
         default: [] // Default to an empty array
     }],
     comments: [{
         user: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
+            ref: "Users",
         },
         comment: {
             type: String,
         },
-        default: [] // Default to an empty array
     }],
     views: {
         type: Number,

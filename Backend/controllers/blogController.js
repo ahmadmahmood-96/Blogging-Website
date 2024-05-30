@@ -36,9 +36,9 @@ exports.addBlog = async (req, res) => {
 exports.likeBlog = async (req, res) => {
     try {
         const {
-            blogId
+            blogId,
+            userId
         } = req.body;
-        const userId = req.user._id; // Assuming user id is available in req.user
 
         const blog = await Blog.findById(blogId);
         if (!blog) {
@@ -63,15 +63,15 @@ exports.likeBlog = async (req, res) => {
     }
 };
 
+
 // Controller to comment on a blog
 exports.commentBlog = async (req, res) => {
     try {
         const {
             blogId,
-            comment
+            comment,
+            userId
         } = req.body;
-        const userId = req.user._id; // Assuming user id is available in req.user
-
         const blog = await Blog.findById(blogId);
         if (!blog) {
             return res.status(404).json({
@@ -99,16 +99,287 @@ exports.commentBlog = async (req, res) => {
     }
 };
 
-// Controller to get all blogs
 exports.getBlogs = async (req, res) => {
     try {
-        const blogs = await Blog.find();
+        const blogs = await Blog.find({
+            public: true
+        }).populate("createdBy").populate("comments.user");
         res.status(200).json({
             blogs
         });
     } catch (error) {
+        console.log(error);
         res.status(500).json({
             message: "Failed to fetch blogs"
+        });
+    }
+};
+
+exports.getAllBlogs = async (req, res) => {
+    try {
+        const blogs = await Blog.find().populate("createdBy").populate("comments.user");
+        res.status(200).json({
+            blogs
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            message: "Failed to fetch blogs"
+        });
+    }
+};
+
+exports.hideBlog = async (req, res) => {
+    try {
+        const {
+            blogId
+        } = req.params;
+        const user = await Blog.findByIdAndUpdate(blogId, {
+            public: false
+        }, {
+            new: true
+        });
+
+        if (user) {
+            return res.json({
+                success: true,
+                message: 'Blog visibility is now private'
+            });
+        } else {
+            return res.json({
+                success: false,
+                message: 'Blog not found'
+            });
+        }
+    } catch (error) {
+        return res.json({
+            success: false,
+            message: 'Internal Server Error'
+        });
+    }
+};
+
+exports.unhideBlog = async (req, res) => {
+    try {
+        const {
+            blogId
+        } = req.params;
+        const user = await Blog.findByIdAndUpdate(blogId, {
+            public: true
+        }, {
+            new: true
+        });
+
+        if (user) {
+            return res.json({
+                success: true,
+                message: 'Blog visibility is now public'
+            });
+        } else {
+            return res.json({
+                success: false,
+                message: 'Blog not found'
+            });
+        }
+    } catch (error) {
+        return res.json({
+            success: false,
+            message: 'Internal Server Error'
+        });
+    }
+};
+
+exports.deleteBlog = async (req, res) => {
+    try {
+        const {
+            blogId
+        } = req.params;
+
+        const blog = await Blog.findById(blogId);
+
+        if (!blog) {
+            return res.json({
+                success: false,
+                error: 'Blog not found'
+            });
+        }
+        // Perform deletion in the database
+        await Blog.findByIdAndDelete(blogId);
+
+        res.json({
+            success: true,
+            message: 'Blog deleted successfully'
+        });
+    } catch (error) {
+        res.json({
+            success: false,
+            error: 'Internal Server Error'
+        });
+    }
+};
+
+exports.editBlog = async (req, res) => {
+    try {
+        const blogId = req.params.blogId;
+        const updatedBlogData = req.body;
+        const updatedBlog = await Blog.findByIdAndUpdate(
+            blogId, {
+                $set: updatedBlogData
+            }, {
+                new: true
+            }
+        );
+        if (!updatedBlog) {
+            res.json({
+                message: 'Blog not found'
+            });
+        } else res.status(201).json({
+            message: 'Blog updated successfully'
+        });
+    } catch (error) {
+        res.json({
+            error: 'Error updating blog'
+        });
+    }
+};
+
+exports.getDashboardStats = async (req, res) => {
+    try {
+        // Fetch total counts
+        const totalBlogs = await Blog.countDocuments();
+        const totalLikes = await Blog.aggregate([{
+                $project: {
+                    likesCount: {
+                        $size: "$likes"
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalLikes: {
+                        $sum: "$likesCount"
+                    }
+                }
+            }
+        ]);
+
+        const totalComments = await Blog.aggregate([{
+                $project: {
+                    commentsCount: {
+                        $size: "$comments"
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalComments: {
+                        $sum: "$commentsCount"
+                    }
+                }
+            }
+        ]);
+
+        // Fetch daily activity
+        const dailyActivity = await Blog.aggregate([{
+                $match: {
+                    createdAt: {
+                        $gte: new Date(new Date() - 24 * 60 * 60 * 1000)
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        $dateToString: {
+                            format: "%Y-%m-%d",
+                            date: "$createdAt"
+                        }
+                    },
+                    blogs: {
+                        $sum: 1
+                    },
+                    likes: {
+                        $sum: {
+                            $size: "$likes"
+                        }
+                    },
+                    comments: {
+                        $sum: {
+                            $size: "$comments"
+                        }
+                    }
+                }
+            }
+        ]);
+
+        // Fetch monthly activity
+        const monthlyActivity = await Blog.aggregate([{
+            $group: {
+                _id: {
+                    $dateToString: {
+                        format: "%Y-%m",
+                        date: "$createdAt"
+                    }
+                },
+                blogs: {
+                    $sum: 1
+                },
+                likes: {
+                    $sum: {
+                        $size: "$likes"
+                    }
+                },
+                comments: {
+                    $sum: {
+                        $size: "$comments"
+                    }
+                }
+            }
+        }]);
+
+        // Fetch yearly activity
+        const yearlyActivity = await Blog.aggregate([{
+            $group: {
+                _id: {
+                    $dateToString: {
+                        format: "%Y",
+                        date: "$createdAt"
+                    }
+                },
+                blogs: {
+                    $sum: 1
+                },
+                likes: {
+                    $sum: {
+                        $size: "$likes"
+                    }
+                },
+                comments: {
+                    $sum: {
+                        $size: "$comments"
+                    }
+                }
+            }
+        }]);
+
+        // Prepare the response data
+        const response = {
+            totalBlogs,
+            totalLikes: totalLikes.length > 0 ? totalLikes[0].totalLikes : 0,
+            totalComments: totalComments.length > 0 ? totalComments[0].totalComments : 0,
+            daily: dailyActivity,
+            monthly: monthlyActivity,
+            yearly: yearlyActivity
+        };
+        console.log(response);
+
+        res.status(200).json(response);
+    } catch (error) {
+        console.error("Failed to fetch dashboard data", error);
+        res.status(500).json({
+            message: "Failed to fetch dashboard data"
         });
     }
 };
