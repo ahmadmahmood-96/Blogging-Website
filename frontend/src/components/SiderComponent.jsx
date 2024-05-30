@@ -15,7 +15,7 @@ const SiderComponent = () => {
   const onClick = ({ key }) => {
     if (key === "logout") {
       localStorage.clear();
-      navigate("/");
+      navigate("/login");
     } else {
       navigate(key);
     }

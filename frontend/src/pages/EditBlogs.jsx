@@ -16,6 +16,7 @@ import {
   EyeOutlined,
   EyeInvisibleOutlined,
 } from "@ant-design/icons";
+import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 
 const baseUrl = process.env.REACT_APP_BASE_URL;
@@ -33,7 +34,11 @@ export default function EditBlogs() {
   useEffect(() => {
     const fetchBlogs = async () => {
       try {
-        const response = await axios.get(`${baseUrl}blog/get-all-blogs`);
+        const response = await axios.get(
+          `${baseUrl}blog/get-all-blogs/${
+            jwtDecode(localStorage.getItem("token")).user._id
+          }`
+        );
         setBlogs(response.data.blogs);
       } catch (error) {
         message.error("Failed to fetch blogs. Please try again.");
@@ -63,8 +68,9 @@ export default function EditBlogs() {
       render: (text) => (
         <div
           style={{
-            maxHeight: 45,
+            maxWidth: 200,
             overflow: "hidden",
+            whiteSpace: "nowrap",
             textOverflow: "ellipsis",
           }}
         >

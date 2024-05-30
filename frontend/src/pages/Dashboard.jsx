@@ -1,5 +1,14 @@
-import React, { useEffect, useState } from "react";
-import { Row, Col, Card, Spin, Typography, Statistic } from "antd";
+import React, { useEffect, useState, useRef } from "react";
+import {
+  Row,
+  Col,
+  Card,
+  Spin,
+  Typography,
+  Statistic,
+  Select,
+  Button,
+} from "antd";
 import CountUp from "react-countup";
 import {
   BarChart,
@@ -9,16 +18,21 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  Label,
 } from "recharts";
 import axios from "axios";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 const { Title } = Typography;
+const { Option } = Select;
+
 const baseUrl = process.env.REACT_APP_BASE_URL;
 const formatter = (value) => <CountUp end={value} separator="," />;
 
 export default function Dashboard() {
   const [data, setData] = useState({
-    totalBlogs: 10,
+    totalBlogs: 0,
     totalLikes: 0,
     totalComments: 0,
     daily: [],
@@ -26,6 +40,8 @@ export default function Dashboard() {
     yearly: [],
   });
   const [loading, setLoading] = useState(true);
+  const [chartType, setChartType] = useState("daily");
+  const chartRef = useRef();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -46,6 +62,20 @@ export default function Dashboard() {
     fetchData();
   }, []);
 
+  const handleChange = (value) => {
+    setChartType(value);
+  };
+
+  const handleDownload = async () => {
+    const input = chartRef.current;
+    const pdf = new jsPDF("landscape");
+    await html2canvas(input).then((canvas) => {
+      const imgData = canvas.toDataURL("image/png");
+      pdf.addImage(imgData, "PNG", 10, 10);
+    });
+    pdf.save("dashboard.pdf");
+  };
+
   if (loading) {
     return (
       <div
@@ -60,6 +90,28 @@ export default function Dashboard() {
       </div>
     );
   }
+
+  const formatChartData = (data, type) => {
+    return data.map((item) => {
+      let formattedItem = { ...item };
+      if (type === "daily") {
+        formattedItem.date = new Date(item._id).toLocaleDateString();
+      } else if (type === "monthly") {
+        const [year, month] = item._id.split("-");
+        formattedItem.month = new Date(year, month - 1).toLocaleString(
+          "default",
+          { month: "long", year: "numeric" }
+        );
+      } else if (type === "yearly") {
+        formattedItem.year = item._id;
+      }
+      return formattedItem;
+    });
+  };
+
+  const chartData = formatChartData(data[chartType], chartType);
+  const xAxisKey =
+    chartType === "daily" ? "date" : chartType === "monthly" ? "month" : "year";
 
   return (
     <div>
@@ -95,49 +147,42 @@ export default function Dashboard() {
       </Row>
       <Row gutter={16} style={{ marginTop: 20 }}>
         <Col span={24}>
-          <Card title="Daily Activity" bordered={false}>
-            <BarChart width={600} height={300} data={data.daily}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="blogs" fill="#8884d8" />
-              <Bar dataKey="likes" fill="#82ca9d" />
-              <Bar dataKey="comments" fill="#ffc658" />
-            </BarChart>
-          </Card>
-        </Col>
-      </Row>
-      <Row gutter={16} style={{ marginTop: 20 }}>
-        <Col span={24}>
-          <Card title="Monthly Activity" bordered={false}>
-            <BarChart width={600} height={300} data={data.monthly}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="blogs" fill="#8884d8" />
-              <Bar dataKey="likes" fill="#82ca9d" />
-              <Bar dataKey="comments" fill="#ffc658" />
-            </BarChart>
-          </Card>
-        </Col>
-      </Row>
-      <Row gutter={16} style={{ marginTop: 20 }}>
-        <Col span={24}>
-          <Card title="Yearly Activity" bordered={false}>
-            <BarChart width={600} height={300} data={data.yearly}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="year" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="blogs" fill="#8884d8" />
-              <Bar dataKey="likes" fill="#82ca9d" />
-              <Bar dataKey="comments" fill="#ffc658" />
-            </BarChart>
+          <Select
+            defaultValue="daily"
+            style={{ width: 200, marginBottom: 20 }}
+            onChange={handleChange}
+          >
+            <Option value="daily">Daily Activity</Option>
+            <Option value="monthly">Monthly Activity</Option>
+            <Option value="yearly">Yearly Activity</Option>
+          </Select>
+          <Button
+            type="primary"
+            onClick={handleDownload}
+            style={{ marginBottom: 20, marginLeft: 20 }}
+          >
+            Download Report
+          </Button>
+          <Card
+            title={`${
+              chartType.charAt(0).toUpperCase() + chartType.slice(1)
+            } Activity`}
+            bordered={false}
+          >
+            <div ref={chartRef}>
+              <BarChart width={600} height={300} data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey={xAxisKey} />
+                <YAxis>
+                  <Label value="Count" angle={-90} position="insideLeft" />
+                </YAxis>
+                <Tooltip />
+                <Legend wrapperStyle={{ marginBottom: 20, marginTop: 10 }} />
+                <Bar dataKey="blogs" fill="#8884d8" />
+                <Bar dataKey="likes" fill="#82ca9d" />
+                <Bar dataKey="comments" fill="#ffc658" />
+              </BarChart>
+            </div>
           </Card>
         </Col>
       </Row>

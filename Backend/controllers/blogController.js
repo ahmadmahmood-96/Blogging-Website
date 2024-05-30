@@ -115,9 +115,33 @@ exports.getBlogs = async (req, res) => {
     }
 };
 
+exports.getBlog = async (req, res) => {
+    try {
+        const {
+            id
+        } = req.params;
+        const blog = await Blog.findById({
+            _id: id
+        }).populate("createdBy").populate("comments.user");
+        res.status(200).json({
+            blog
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            message: "Failed to fetch blog"
+        });
+    }
+};
+
 exports.getAllBlogs = async (req, res) => {
     try {
-        const blogs = await Blog.find().populate("createdBy").populate("comments.user");
+        const {
+            id
+        } = req.params;
+        const blogs = await Blog.find({
+            createdBy: id
+        }).populate("createdBy").populate("comments.user");
         res.status(200).json({
             blogs
         });
@@ -373,8 +397,6 @@ exports.getDashboardStats = async (req, res) => {
             monthly: monthlyActivity,
             yearly: yearlyActivity
         };
-        console.log(response);
-
         res.status(200).json(response);
     } catch (error) {
         console.error("Failed to fetch dashboard data", error);

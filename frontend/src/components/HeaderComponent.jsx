@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Space, Typography, Tooltip } from "antd";
-import { MenuUnfoldOutlined, MenuFoldOutlined } from "@ant-design/icons";
+import {
+  MenuUnfoldOutlined,
+  MenuFoldOutlined,
+  LoginOutlined,
+} from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 
@@ -10,10 +14,16 @@ const HeaderComponent = ({ collapsed, handleToggle }) => {
 
   useEffect(() => {
     if (localStorage.getItem("token")) {
-      const name = jwtDecode(localStorage.getItem("token")).user.name;
-      setName(name);
+      const decodedToken = jwtDecode(localStorage.getItem("token"));
+      if (decodedToken && decodedToken.user && decodedToken.user.name) {
+        setName(decodedToken.user.name);
+      }
     }
-  }, [name, navigate]);
+  }, [navigate]);
+
+  const handleLogin = () => {
+    navigate("/login");
+  };
 
   return (
     <header style={headerStyle}>
@@ -39,11 +49,22 @@ const HeaderComponent = ({ collapsed, handleToggle }) => {
         </Typography.Text>
       </Space>
       <Space size="large">
-        <Typography.Text
-          style={{ fontSize: 17, fontWeight: "normal", color: "#fbfbfb" }}
-        >
-          {name}
-        </Typography.Text>
+        {name ? (
+          <Typography.Text
+            style={{ fontSize: 17, fontWeight: "normal", color: "#fbfbfb" }}
+          >
+            {name}
+          </Typography.Text>
+        ) : (
+          <Typography.Text
+            type="primary"
+            onClick={handleLogin}
+            style={{ cursor: "pointer", color: "white", fontSize: 22 }}
+          >
+            <LoginOutlined style={{ marginRight: 8 }} />
+            Login
+          </Typography.Text>
+        )}
       </Space>
     </header>
   );

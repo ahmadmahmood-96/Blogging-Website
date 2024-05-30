@@ -8,6 +8,8 @@
     "@testing-library/user-event": "^13.5.0",
     "antd": "^5.17.3",
     "axios": "^1.7.2",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^2.5.1",
     "jwt-decode": "^4.0.0",
     "react": "^18.3.1",
     "react-countup": "^6.5.3",

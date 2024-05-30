@@ -1,6 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Typography, Card, Input, message, Spin, Row, Col, Select } from "antd";
+import {
+  Typography,
+  Card,
+  Input,
+  message,
+  Spin,
+  Row,
+  Col,
+  Select,
+  Modal,
+} from "antd";
 import axios from "axios";
 import { SearchOutlined } from "@ant-design/icons";
 
@@ -9,13 +19,14 @@ const { Option } = Select;
 
 const baseUrl = process.env.REACT_APP_BASE_URL;
 
-export default function Blogs() {
+export default function NonLoggedInUserblogs() {
   const navigate = useNavigate();
   const [blogs, setBlogs] = useState([]);
   const [filteredBlogs, setFilteredBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [loginModalVisible, setLoginModalVisible] = useState(false);
 
   useEffect(() => {
     const fetchBlogs = async () => {
@@ -51,6 +62,23 @@ export default function Blogs() {
     setFilteredBlogs(filtered);
   };
 
+  const handleCardClick = (blogId) => {
+    if (localStorage.getItem("token")) {
+      navigate(`/${blogId}`);
+    } else {
+      setLoginModalVisible(true);
+    }
+  };
+
+  const handleLoginModalOk = () => {
+    setLoginModalVisible(false);
+    navigate("/login");
+  };
+
+  const handleLoginModalCancel = () => {
+    setLoginModalVisible(false);
+  };
+
   return (
     <>
       {loading ? (
@@ -66,7 +94,7 @@ export default function Blogs() {
         </div>
       ) : (
         <>
-          <Row gutter={16} style={{ marginBottom: 16 }}>
+          <Row gutter={16} style={{ margin: 10 }}>
             <Col span={18}>
               <Input
                 allowClear
@@ -95,13 +123,13 @@ export default function Blogs() {
               </Select>
             </Col>
           </Row>
-          <Row gutter={16}>
+          <Row gutter={16} style={{ margin: 10 }}>
             {filteredBlogs.map((blog) => (
               <Col span={6} key={blog._id} style={{ marginBottom: 16 }}>
                 <Card
                   hoverable
                   cover={<img alt="blog cover" src={blog.image} height={200} />}
-                  onClick={() => navigate(`/${blog._id}`)}
+                  onClick={() => handleCardClick(blog._id)}
                 >
                   <Card.Meta
                     title={blog.title}
@@ -117,6 +145,14 @@ export default function Blogs() {
           </Row>
         </>
       )}
+      <Modal
+        title="Login Required"
+        open={loginModalVisible}
+        onOk={handleLoginModalOk}
+        onCancel={handleLoginModalCancel}
+      >
+        <p>Please log in to continue.</p>
+      </Modal>
     </>
   );
 }
