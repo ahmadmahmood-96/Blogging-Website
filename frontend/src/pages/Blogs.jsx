@@ -51,6 +51,11 @@ export default function Blogs() {
     setFilteredBlogs(filtered);
   };
 
+  const handleClickBlog = async (blogId) => {
+    const response = await axios.put(`${baseUrl}blog/view-blog/${blogId}`);
+    if (response.data.success) navigate(`/${blogId}`);
+  };
+
   return (
     <>
       {loading ? (
@@ -101,7 +106,8 @@ export default function Blogs() {
                 <Card
                   hoverable
                   cover={<img alt="blog cover" src={blog.image} height={200} />}
-                  onClick={() => navigate(`/${blog._id}`)}
+                  onClick={() => handleClickBlog(blog._id)}
+                  key={blog._id}
                 >
                   <Card.Meta
                     title={blog.title}

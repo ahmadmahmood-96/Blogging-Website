@@ -426,3 +426,41 @@ exports.getDashboardStats = async (req, res) => {
         });
     }
 };
+
+exports.viewBlog = async (req, res) => {
+    try {
+        const {
+            id
+        } = req.params;
+
+        // Find the blog by its ID and increment the views count
+        const blog = await Blog.findByIdAndUpdate(
+            id, {
+                $inc: {
+                    views: 1
+                }
+            }, // Increment the views count by 1
+            {
+                new: true
+            } // Return the updated document
+        );
+
+        if (!blog) {
+            return res.json({
+                success: false,
+                error: 'Blog not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Blog view count incremented successfully',
+        });
+    } catch (error) {
+        console.error(error); // Log the error for debugging
+        res.json({
+            success: false,
+            error: 'Internal Server Error'
+        });
+    }
+};
