@@ -31,6 +31,12 @@ export default function EditBlogs() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Configure global settings for message
+  message.config({
+    duration: 2,
+    maxCount: 1,
+  });
+
   useEffect(() => {
     const fetchBlogs = async () => {
       try {
@@ -48,6 +54,7 @@ export default function EditBlogs() {
     };
 
     fetchBlogs();
+    // eslint-disable-next-line
   }, []);
 
   const columns = [
@@ -357,14 +364,14 @@ export default function EditBlogs() {
         <Typography.Text>Blog Category:</Typography.Text>
         <InputNumber
           value={editedCategory}
-          placeholder="Enter Insurance Price"
+          placeholder="Enter Blog Category"
           onChange={(value) => setEditedCategory(value)}
           style={{ width: "100%", marginBottom: 15 }}
         />
         <Typography.Text>Blog Content:</Typography.Text>
         <Input
           value={editedContent}
-          placeholder="Enter Insurance Description"
+          placeholder="Enter Blog Content"
           onChange={(e) => setEditedContent(e.target.value)}
           style={{ marginBottom: 15 }}
         />

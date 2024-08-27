@@ -21,6 +21,7 @@ import {
   Label,
 } from "recharts";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
@@ -46,11 +47,16 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`${baseUrl}blog/stats`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+        const response = await axios.get(
+          `${baseUrl}blog/stats/${
+            jwtDecode(localStorage.getItem("token")).user._id
+          }`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
         setData(response.data);
       } catch (error) {
         console.error("Failed to fetch dashboard data", error);

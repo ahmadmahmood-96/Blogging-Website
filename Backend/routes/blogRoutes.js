@@ -14,6 +14,6 @@ router.put("/hide-blog/:blogId", verifyToken, blogController.hideBlog);
 router.put("/unhide-blog/:blogId", verifyToken, blogController.unhideBlog);
 router.delete("/delete-blog/:blogId", verifyToken, blogController.deleteBlog);
 router.put('/edit-blog/:blogId', verifyToken, blogController.editBlog);
-router.get("/stats", verifyToken, blogController.getDashboardStats);
+router.get("/stats/:id", verifyToken, blogController.getDashboardStats);
 
 module.exports = router;

@@ -1,4 +1,5 @@
 const Blog = require("../models/blog");
+const mongoose = require("mongoose");
 
 exports.addBlog = async (req, res) => {
     try {
@@ -270,25 +271,34 @@ exports.editBlog = async (req, res) => {
 exports.getDashboardStats = async (req, res) => {
     try {
         // Fetch total counts
-        const totalBlogs = await Blog.countDocuments();
+        const userId = req.params.id;
+        const totalBlogs = await Blog.countDocuments({
+            createdBy: userId
+        });
         const totalLikes = await Blog.aggregate([{
-                $project: {
-                    likesCount: {
-                        $size: "$likes"
-                    }
-                }
-            },
-            {
-                $group: {
-                    _id: null,
-                    totalLikes: {
-                        $sum: "$likesCount"
-                    }
+            $match: {
+                createdBy: mongoose.Types.ObjectId.createFromHexString(userId)
+            }
+        }, {
+            $project: {
+                likesCount: {
+                    $size: '$likes'
                 }
             }
-        ]);
+        }, {
+            $group: {
+                _id: null,
+                totalLikes: {
+                    $sum: "$likesCount"
+                }
+            }
+        }]);
 
         const totalComments = await Blog.aggregate([{
+                $match: {
+                    createdBy: mongoose.Types.ObjectId.createFromHexString(userId)
+                }
+            }, {
                 $project: {
                     commentsCount: {
                         $size: "$comments"
@@ -308,6 +318,7 @@ exports.getDashboardStats = async (req, res) => {
         // Fetch daily activity
         const dailyActivity = await Blog.aggregate([{
                 $match: {
+                    createdBy: mongoose.Types.ObjectId.createFromHexString(userId),
                     createdAt: {
                         $gte: new Date(new Date() - 24 * 60 * 60 * 1000)
                     }
@@ -340,6 +351,10 @@ exports.getDashboardStats = async (req, res) => {
 
         // Fetch monthly activity
         const monthlyActivity = await Blog.aggregate([{
+            $match: {
+                createdBy: mongoose.Types.ObjectId.createFromHexString(userId),
+            }
+        }, {
             $group: {
                 _id: {
                     $dateToString: {
@@ -365,28 +380,34 @@ exports.getDashboardStats = async (req, res) => {
 
         // Fetch yearly activity
         const yearlyActivity = await Blog.aggregate([{
-            $group: {
-                _id: {
-                    $dateToString: {
-                        format: "%Y",
-                        date: "$createdAt"
-                    }
-                },
-                blogs: {
-                    $sum: 1
-                },
-                likes: {
-                    $sum: {
-                        $size: "$likes"
-                    }
-                },
-                comments: {
-                    $sum: {
-                        $size: "$comments"
+                $match: {
+                    createdBy: mongoose.Types.ObjectId.createFromHexString(userId),
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        $dateToString: {
+                            format: "%Y",
+                            date: "$createdAt"
+                        }
+                    },
+                    blogs: {
+                        $sum: 1
+                    },
+                    likes: {
+                        $sum: {
+                            $size: "$likes"
+                        }
+                    },
+                    comments: {
+                        $sum: {
+                            $size: "$comments"
+                        }
                     }
                 }
             }
-        }]);
+        ]);
 
         // Prepare the response data
         const response = {
